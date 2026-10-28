@@ -1,0 +1,44 @@
+# Build directories
+Builds/
+build/
+build-*/
+out/
+
+# CMake artifacts
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+cmake_install.cmake
+compile_commands.json
+CTestTestfile.cmake
+_deps/
+Testing/
+
+# CPM cache (if you're not setting CPM_SOURCE_CACHE outside the repo)
+.cache/
+cpm-cache/
+CPM_modules/
+
+# Editor / IDE
+.vs/
+.vscode/
+.idea/
+*.swp
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Compiled binaries / objects
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.dylib
+*.app
+
+# JUCE-specific build outputs (VST3/AU/etc if built in-tree)
+*.vst3
+*.component
+*.aaxplugin
