@@ -25,8 +25,8 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
                        .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
                      #endif
                        ),
-       parameters (*this, nullptr, juce::Identifier ("APVTS"), createParameterLayout())
-
+       parameters (*this, nullptr, juce::Identifier ("APVTS"), createParameterLayout()),
+       mainProcessor(new juce::AudioProcessorGraph())
 {
     phaseParameter = parameters.getRawParameterValue("invertPhase");
     gainParameter = parameters.getRawParameterValue("gain");
@@ -102,18 +102,58 @@ void AudioPluginAudioProcessor::changeProgramName (int index, const juce::String
 }
 
 //==============================================================================
-void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlockExpected)
+void AudioPluginAudioProcessor::initialiseGraph(){
+    mainProcessor->clear();
+    audioInputNode = mainProcessor->addNode (std::make_unique<AudioGraphIOProcessor>
+(AudioGraphIOProcessor::audioInputNode));
+    audioInputNode = mainProcessor->addNode (std::make_unique<AudioGraphIOProcessor>
+(AudioGraphIOProcessor::audioOutputNode));
+    audioInputNode = mainProcessor->addNode (std::make_unique<AudioGraphIOProcessor>
+(AudioGraphIOProcessor::midiInputNode));
+    audioInputNode = mainProcessor->addNode (std::make_unique<AudioGraphIOProcessor>
+(AudioGraphIOProcessor::midiOutputNode));
+    connectAudioNodes();
+    connectMidiNodes();
+
+}
+
+void AudioPluginAudioProcessor::updateGraph(){
+
+} 
+
+void AudioPluginAudioProcessor::connectAudioNodes(){
+    for (int channel = 0; channel < 2; ++channel)
+        mainProcessor->addConnection ({ { audioInputNode->nodeID, channel },
+            { audioOutputNode->nodeID, channel } });
+}
+
+void AudioPluginAudioProcessor::connectMidiNodes(){
+    mainProcessor->addConnection ({ { midiInputNode->nodeID,
+juce::AudioProcessorGraph::midiChannelIndex },
+    { midiOutputNode->nodeID, juce::AudioProcessorGraph::midiChannelIndex } });
+}
+
+//==============================================================================
+void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
+    
+    juce::String message;
+    message << "Preparing to play audio...\n";
+    message << " samplesPerBlock = " << samplesPerBlock << "\n";
+    message << " sampleRate = " << sampleRate;
+    juce::Logger::getCurrentLogger()->writeToLog (message);
+
     auto phase = *phaseParameter ? -1.0f : 1.0f;
     previousGain = *gainParameter * phase;
 
-    juce::String message;
-    message << "Preparing to play audio...\n";
-    message << " samplesPerBlockExpected = " << samplesPerBlockExpected << "\n";
-    message << " sampleRate = " << sampleRate;
-    juce::Logger::getCurrentLogger()->writeToLog (message);
+    mainProcessor->setPlayConfigDetails(getMainBusNumInputChannels(),
+        getMainBusNumOutputChannels(),
+        sampleRate,
+        samplesPerBlock);
+    mainProcessor->prepareToPlay(sampleRate, samplesPerBlock);
+    initialiseGraph();
 
 }
 
@@ -121,6 +161,7 @@ void AudioPluginAudioProcessor::releaseResources()
 {
     // When playback stops, you can use this as an opportunity to free up any
     // spare memory, etc.
+    mainProcessor->releaseResources();
 }
 
 bool AudioPluginAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
@@ -133,6 +174,9 @@ bool AudioPluginAudioProcessor::isBusesLayoutSupported (const BusesLayout& layou
     // In this template code we only support mono or stereo.
     // Some plugin hosts, such as certain GarageBand versions, will only
     // load plugins that support stereo bus layouts.
+    if (layouts.getMainInputChannelSet() == juce::AudioChannelSet::disabled()
+        || layouts.getMainOutputChannelSet() == juce::AudioChannelSet::disabled())
+        return false;
     if (layouts.getMainOutputChannelSet() != juce::AudioChannelSet::mono()
      && layouts.getMainOutputChannelSet() != juce::AudioChannelSet::stereo())
         return false;
@@ -150,19 +194,23 @@ bool AudioPluginAudioProcessor::isBusesLayoutSupported (const BusesLayout& layou
 void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
                                               juce::MidiBuffer& midiMessages)
 {
+
+    auto totalNumInputChannels  = getTotalNumInputChannels();
+    auto totalNumOutputChannels = getTotalNumOutputChannels();
+
+    for (int i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
+        buffer.clear(i, 0, buffer.getNumSamples());
+    updateGraph();
+
     auto phase = *phaseParameter ? -1.0f : 1.0f;
     auto currentGain = *gainParameter * phase;
-
+    
     if (juce::approximatelyEqual (currentGain, previousGain)){
         buffer.applyGain(currentGain);
     }else{
         buffer.applyGainRamp(0, buffer.getNumSamples(), previousGain, currentGain);
         previousGain = currentGain;
     }
-
-    juce::ScopedNoDenormals noDenormals;
-    auto totalNumInputChannels  = getTotalNumInputChannels();
-    auto totalNumOutputChannels = getTotalNumOutputChannels();
 
     // In case we have more outputs than inputs, this code clears any output
     // channels that didn't contain input data, (because these aren't
@@ -182,7 +230,8 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     // the samples and the outer loop is handling the channels.
     // Alternatively, you can process the samples with the channels
     // interleaved by keeping the same state.a
-
+    
+    /*
     for (int channel = 0; channel < totalNumInputChannels; ++channel)
     {
         // Get a pointer to the start sample in the buffer for this audio output channel
@@ -193,6 +242,7 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
         // ..do something to the data...
     }
+    */
 
     juce::MidiBuffer processedMidi;
     for(const auto metadata : midiMessages)
@@ -208,6 +258,11 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         processedMidi.addEvent(message, time);
     }
     midiMessages.swapWith(processedMidi);
+
+
+
+
+    mainProcessor->processBlock(buffer, midiMessages);
 }
 
 //==============================================================================

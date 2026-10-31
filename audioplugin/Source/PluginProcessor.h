@@ -1,6 +1,8 @@
 #pragma once
 
 #include <juce_audio_processors/juce_audio_processors.h>
+using AudioGraphIOProcessor = juce::AudioProcessorGraph::AudioGraphIOProcessor;
+using Node = juce::AudioProcessorGraph::Node;
 
 //==============================================================================
 class AudioPluginAudioProcessor final : public juce::AudioProcessor
@@ -10,6 +12,12 @@ public:
     //==============================================================================
     AudioPluginAudioProcessor();
     ~AudioPluginAudioProcessor() override;
+
+    //==============================================================================
+    void initialiseGraph();
+    void updateGraph();
+    void connectAudioNodes();
+    void connectMidiNodes();
 
     //==============================================================================
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
@@ -39,6 +47,7 @@ public:
     const juce::String getProgramName (int index) override;
     void changeProgramName (int index, const juce::String& newName) override;
 
+
     //==============================================================================
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
@@ -47,6 +56,13 @@ private:
     //==============================================================================
     juce::Random random;
     
+    std::unique_ptr<juce::AudioProcessorGraph> mainProcessor;
+
+    Node::Ptr audioInputNode;
+    Node::Ptr audioOutputNode;
+    Node::Ptr midiInputNode;
+    Node::Ptr midiOutputNode;
+
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
     juce::AudioProcessorValueTreeState parameters;
     float previousGain;

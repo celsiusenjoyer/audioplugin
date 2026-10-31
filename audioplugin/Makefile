@@ -251,6 +251,30 @@ Source/PluginEditor.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/audioplugin.dir/build.make CMakeFiles/audioplugin.dir/Source/PluginEditor.cpp.s
 .PHONY : Source/PluginEditor.cpp.s
 
+Source/PluginOscillatorProcessor.o: Source/PluginOscillatorProcessor.cpp.o
+.PHONY : Source/PluginOscillatorProcessor.o
+
+# target to build an object file
+Source/PluginOscillatorProcessor.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/audioplugin.dir/build.make CMakeFiles/audioplugin.dir/Source/PluginOscillatorProcessor.cpp.o
+.PHONY : Source/PluginOscillatorProcessor.cpp.o
+
+Source/PluginOscillatorProcessor.i: Source/PluginOscillatorProcessor.cpp.i
+.PHONY : Source/PluginOscillatorProcessor.i
+
+# target to preprocess a source file
+Source/PluginOscillatorProcessor.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/audioplugin.dir/build.make CMakeFiles/audioplugin.dir/Source/PluginOscillatorProcessor.cpp.i
+.PHONY : Source/PluginOscillatorProcessor.cpp.i
+
+Source/PluginOscillatorProcessor.s: Source/PluginOscillatorProcessor.cpp.s
+.PHONY : Source/PluginOscillatorProcessor.s
+
+# target to generate assembly for a file
+Source/PluginOscillatorProcessor.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/audioplugin.dir/build.make CMakeFiles/audioplugin.dir/Source/PluginOscillatorProcessor.cpp.s
+.PHONY : Source/PluginOscillatorProcessor.cpp.s
+
 Source/PluginProcessor.o: Source/PluginProcessor.cpp.o
 .PHONY : Source/PluginProcessor.o
 
@@ -274,6 +298,30 @@ Source/PluginProcessor.s: Source/PluginProcessor.cpp.s
 Source/PluginProcessor.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/audioplugin.dir/build.make CMakeFiles/audioplugin.dir/Source/PluginProcessor.cpp.s
 .PHONY : Source/PluginProcessor.cpp.s
+
+Source/PluginProcessorBase.o: Source/PluginProcessorBase.cpp.o
+.PHONY : Source/PluginProcessorBase.o
+
+# target to build an object file
+Source/PluginProcessorBase.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/audioplugin.dir/build.make CMakeFiles/audioplugin.dir/Source/PluginProcessorBase.cpp.o
+.PHONY : Source/PluginProcessorBase.cpp.o
+
+Source/PluginProcessorBase.i: Source/PluginProcessorBase.cpp.i
+.PHONY : Source/PluginProcessorBase.i
+
+# target to preprocess a source file
+Source/PluginProcessorBase.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/audioplugin.dir/build.make CMakeFiles/audioplugin.dir/Source/PluginProcessorBase.cpp.i
+.PHONY : Source/PluginProcessorBase.cpp.i
+
+Source/PluginProcessorBase.s: Source/PluginProcessorBase.cpp.s
+.PHONY : Source/PluginProcessorBase.s
+
+# target to generate assembly for a file
+Source/PluginProcessorBase.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/audioplugin.dir/build.make CMakeFiles/audioplugin.dir/Source/PluginProcessorBase.cpp.s
+.PHONY : Source/PluginProcessorBase.cpp.s
 
 _deps/juce-src/modules/juce_analytics/juce_analytics.o: _deps/juce-src/modules/juce_analytics/juce_analytics.cpp.o
 .PHONY : _deps/juce-src/modules/juce_analytics/juce_analytics.o
@@ -1831,9 +1879,15 @@ help:
 	@echo "... Source/PluginEditor.o"
 	@echo "... Source/PluginEditor.i"
 	@echo "... Source/PluginEditor.s"
+	@echo "... Source/PluginOscillatorProcessor.o"
+	@echo "... Source/PluginOscillatorProcessor.i"
+	@echo "... Source/PluginOscillatorProcessor.s"
 	@echo "... Source/PluginProcessor.o"
 	@echo "... Source/PluginProcessor.i"
 	@echo "... Source/PluginProcessor.s"
+	@echo "... Source/PluginProcessorBase.o"
+	@echo "... Source/PluginProcessorBase.i"
+	@echo "... Source/PluginProcessorBase.s"
 	@echo "... _deps/juce-src/modules/juce_analytics/juce_analytics.o"
 	@echo "... _deps/juce-src/modules/juce_analytics/juce_analytics.i"
 	@echo "... _deps/juce-src/modules/juce_analytics/juce_analytics.s"
