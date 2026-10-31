@@ -1,6 +1,20 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
+juce::AudioProcessorValueTreeState::ParameterLayout
+AudioPluginAudioProcessor::createParameterLayout()
+{
+    juce::AudioProcessorValueTreeState::ParameterLayout layout;
+
+    layout.add(std::make_unique<juce::AudioParameterFloat> (juce::ParameterID{"gain", 1}, // parameter ID
+                                                 "Gain", // parameter name
+                                                 juce::NormalisableRange<float> (0.0f, 1.0f),
+                                                 0.5f)); // parameter range
+    layout.add(std::make_unique<juce::AudioParameterBool> (juce::ParameterID{"invertPhase", 1},
+                                                           "Invert Phase",
+                                                           false));
+    return layout;
+}
 //==============================================================================
 AudioPluginAudioProcessor::AudioPluginAudioProcessor()
      : AudioProcessor (BusesProperties()
@@ -10,15 +24,12 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
                       #endif
                        .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
                      #endif
-                       )
+                       ),
+       parameters (*this, nullptr, juce::Identifier ("APVTS"), createParameterLayout())
+
 {
-
-    addParameter(gain = new juce::AudioParameterFloat ("gain", // parameter ID
-                    "Gain", // parameter name
-                    juce::NormalisableRange<float> (0.0f, 1.0f), // parameter range
-                    0.5f)); // default value
-    addParameter(invertPhase = new juce::AudioParameterBool("invertPhase", "Invert Phase", false));
-
+    phaseParameter = parameters.getRawParameterValue("invertPhase");
+    gainParameter = parameters.getRawParameterValue("gain");
 }
 
 AudioPluginAudioProcessor::~AudioPluginAudioProcessor()
@@ -95,8 +106,8 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
 {
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
-    auto phase = *invertPhase ? -1.0f : 1.0f;
-    previousGain = *gain * phase;
+    auto phase = *phaseParameter ? -1.0f : 1.0f;
+    previousGain = *gainParameter * phase;
 
     juce::String message;
     message << "Preparing to play audio...\n";
@@ -139,8 +150,8 @@ bool AudioPluginAudioProcessor::isBusesLayoutSupported (const BusesLayout& layou
 void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
                                               juce::MidiBuffer& midiMessages)
 {
-    auto phase = *invertPhase ? -1.0f : 1.0f;
-    auto currentGain = *gain * phase;
+    auto phase = *phaseParameter ? -1.0f : 1.0f;
+    auto currentGain = *gainParameter * phase;
 
     if (juce::approximatelyEqual (currentGain, previousGain)){
         buffer.applyGain(currentGain);
@@ -207,7 +218,7 @@ bool AudioPluginAudioProcessor::hasEditor() const
 
 juce::AudioProcessorEditor* AudioPluginAudioProcessor::createEditor()
 {
-    return new AudioPluginAudioProcessorEditor (*this);
+    return new AudioPluginAudioProcessorEditor (*this, parameters);
 }
 
 //==============================================================================
@@ -216,9 +227,8 @@ void AudioPluginAudioProcessor::getStateInformation (juce::MemoryBlock& destData
     // You should use this method to store your parameters in the memory block.
     // You could do that either as raw data, or use the XML or ValueTree classes
     // as intermediaries to make it easy to save and load complex data.
-    std::unique_ptr<juce::XmlElement> xml (new juce::XmlElement ("Parameter"));
-    xml->setAttribute("gain", (double) *gain);
-    xml->setAttribute("invertPhase", *invertPhase);
+    auto state = parameters.copyState();
+    std::unique_ptr<juce::XmlElement> xml (state.createXml());
     copyXmlToBinary(*xml, destData);
 }
 
@@ -228,9 +238,8 @@ void AudioPluginAudioProcessor::setStateInformation (const void* data, int sizeI
     // whose contents will have been created by the getStateInformation() call.
     std::unique_ptr<juce::XmlElement> xmlState (getXmlFromBinary (data, sizeInBytes));
     if (xmlState.get() != nullptr)
-        if (xmlState->hasTagName("Parameter"))
-            *gain = (float) xmlState->getDoubleAttribute("gain", 1.0);
-            *invertPhase = xmlState->getBoolAttribute("invertPhase", false);
+        if (xmlState->hasTagName(parameters.state.getType()))
+            parameters.replaceState(juce::ValueTree::fromXml (*xmlState));
 }
 
 //==============================================================================

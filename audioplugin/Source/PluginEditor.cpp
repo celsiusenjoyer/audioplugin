@@ -2,21 +2,23 @@
 #include "PluginEditor.h"
 
 //==============================================================================
-AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAudioProcessor& p)
-    : AudioProcessorEditor (&p), audioProcessor (p)
+AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAudioProcessor& p,
+                                                                  juce::AudioProcessorValueTreeState& vts)
+    : AudioProcessorEditor (&p), audioProcessor (p), valueTreeState(vts)
 {
-    // White noise generator
+    gainLabel.setText("Gain", juce::dontSendNotification);
+    addAndMakeVisible(gainLabel);
 
-    setSize (800, 600);
+    addAndMakeVisible(gainSlider);
+    // gainAttachment.reset(new SliderAttachment(valueTreeState, "gain", gainSlider));
 
+    invertButton.setButtonText("Invert Phase");
+    addAndMakeVisible(invertButton);
+    // invertAttachment.reset(new ButtonAttachment(valueTreeState, "invertPhase", invertButton));
 
+    setSize(paramSliderWidth + paramLabelWidth, juce::jmax(100, paramControlHeight * 2));
 
-    // MIDI SLIDER
-    // juce::ignoreUnused (processorRef);
-    // Make sure that before the constructor has finished, you've set the
-    // editor's size to whatever you need it to be.
-    
-    //setSize (200, 200);
+    /* MIDI SLIDER
     midiVolume.setSliderStyle(juce::Slider::LinearBarVertical);
     midiVolume.setRange(0.0, 127.0, 1.0);
     midiVolume.setTextBoxStyle(juce::Slider::NoTextBox, false, 90, 0);
@@ -26,6 +28,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     midiVolume.addListener(this);
 
     addAndMakeVisible(&midiVolume);
+    */
 
 }
 
@@ -46,7 +49,6 @@ void AudioPluginAudioProcessorEditor::paint (juce::Graphics& g)
 
     g.setColour (juce::Colours::white);
     g.setFont (15.0f);
-    g.drawFittedText ("Midi volume", getLocalBounds(), juce::Justification::centred, 1);
 }
 
 void AudioPluginAudioProcessorEditor::resized()
@@ -54,5 +56,7 @@ void AudioPluginAudioProcessorEditor::resized()
     // This is generally where you'll want to lay out the positions of any
     // subcomponents in your editor..
 
-    midiVolume.setBounds(40, 30, 20, getHeight() - 60);
+    // midiVolume.setBounds(40, 30, 20, getHeight() - 60);
+
+    gainSlider.setBounds(40, 30, 20, getHeight() - 60);
 }

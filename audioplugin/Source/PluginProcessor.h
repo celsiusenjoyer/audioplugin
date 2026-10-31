@@ -47,9 +47,11 @@ private:
     //==============================================================================
     juce::Random random;
     
-    juce::AudioParameterBool* invertPhase;
-    juce::AudioParameterFloat* gain;
+    static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
+    juce::AudioProcessorValueTreeState parameters;
     float previousGain;
+    std::atomic<float>* phaseParameter = nullptr;
+    std::atomic<float>* gainParameter = nullptr;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessor)
 };
