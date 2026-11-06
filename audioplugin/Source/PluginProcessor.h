@@ -1,6 +1,7 @@
 #pragma once
 
 #include <juce_audio_processors/juce_audio_processors.h>
+
 using AudioGraphIOProcessor = juce::AudioProcessorGraph::AudioGraphIOProcessor;
 using Node = juce::AudioProcessorGraph::Node;
 
@@ -56,18 +57,32 @@ private:
     //==============================================================================
     juce::Random random;
     
+    juce::StringArray processorChoices { "Empty", "Oscillator", "Gain", "Filter" };
     std::unique_ptr<juce::AudioProcessorGraph> mainProcessor;
+    juce::AudioParameterBool* muteInput;
 
     Node::Ptr audioInputNode;
     Node::Ptr audioOutputNode;
     Node::Ptr midiInputNode;
     Node::Ptr midiOutputNode;
+    Node::Ptr slot1Node;
+    Node::Ptr slot2Node;
+    Node::Ptr slot3Node;
 
-    static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
+    juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
     juce::AudioProcessorValueTreeState parameters;
+
     float previousGain;
+    
     std::atomic<float>* phaseParameter = nullptr;
     std::atomic<float>* gainParameter = nullptr;
+    std::atomic<float>* muteInputParameter = nullptr;
+    std::atomic<float>* fxSlot1Parameter = nullptr;
+    std::atomic<float>* fxSlot2Parameter = nullptr;
+    std::atomic<float>* fxSlot3Parameter = nullptr;
+    std::atomic<float>* fxBypass1Parameter = nullptr;
+    std::atomic<float>* fxBypass2Parameter = nullptr;
+    std::atomic<float>* fxBypass3Parameter = nullptr;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessor)
 };

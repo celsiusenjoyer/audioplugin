@@ -33,10 +33,14 @@ set(SourceFiles
         Source/PluginEditor.h
         Source/PluginProcessor.cpp
         Source/PluginProcessor.h
-        Source/PluginProcessorBase.cpp
-        Source/PluginProcessorBase.h
-        Source/PluginOscillatorProcessor.cpp
-        Source/PluginOscillatorProcessor.h
+        Source/ProcessorBase.cpp
+        Source/ProcessorBase.h
+        Source/OscillatorProcessor.cpp
+        Source/OscillatorProcessor.h
+        Source/GainProcessor.cpp
+        Source/GainProcessor.h
+        Source/FilterProcessor.cpp
+        Source/FilterProcessor.h
 )
 
 # Change these to your own preferences

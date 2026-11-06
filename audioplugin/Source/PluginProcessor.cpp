@@ -1,18 +1,27 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "OscillatorProcessor.h"
+#include "FilterProcessor.h"
+#include "GainProcessor.h"
+#include <iostream>
 
 juce::AudioProcessorValueTreeState::ParameterLayout
 AudioPluginAudioProcessor::createParameterLayout()
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
 
-    layout.add(std::make_unique<juce::AudioParameterFloat> (juce::ParameterID{"gain", 1}, // parameter ID
-                                                 "Gain", // parameter name
-                                                 juce::NormalisableRange<float> (0.0f, 1.0f),
-                                                 0.5f)); // parameter range
-    layout.add(std::make_unique<juce::AudioParameterBool> (juce::ParameterID{"invertPhase", 1},
-                                                           "Invert Phase",
-                                                           false));
+    layout.add(std::make_unique<juce::AudioParameterFloat> (juce::ParameterID{"gain", 1}, "Gain", juce::NormalisableRange<float> (0.0f, 1.0f), 0.5f)); 
+    layout.add(std::make_unique<juce::AudioParameterBool>  (juce::ParameterID{"invertPhase", 1}, "Invert Phase", false));
+    layout.add(std::make_unique<juce::AudioParameterBool>  (juce::ParameterID{"mute", 1}, "Mute Input", true ));
+
+    layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID{"fxSlot1", 1}, "FX Slot 1", processorChoices, 0));
+    layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID{"fxSlot2", 1}, "FX Slot 2", processorChoices, 0));
+    layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID{"fxSlot3", 1}, "FX Slot 3", processorChoices, 0));
+
+    layout.add(std::make_unique<juce::AudioParameterBool>  (juce::ParameterID{"fxBypass1", 1}, "FX Bypass 1", false));
+    layout.add(std::make_unique<juce::AudioParameterBool>  (juce::ParameterID{"fxBypass2", 1}, "FX Bypass 2", false));
+    layout.add(std::make_unique<juce::AudioParameterBool>  (juce::ParameterID{"fxBypass3", 1}, "FX Bypass 3", false));
+
     return layout;
 }
 //==============================================================================
@@ -28,8 +37,17 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
        parameters (*this, nullptr, juce::Identifier ("APVTS"), createParameterLayout()),
        mainProcessor(new juce::AudioProcessorGraph())
 {
-    phaseParameter = parameters.getRawParameterValue("invertPhase");
+
     gainParameter = parameters.getRawParameterValue("gain");
+    phaseParameter = parameters.getRawParameterValue("invertPhase");
+    muteInputParameter = parameters.getRawParameterValue("muteInput");
+    fxSlot1Parameter = parameters.getRawParameterValue("fxSlot1");
+    fxSlot2Parameter = parameters.getRawParameterValue("fxSlot2");
+    fxSlot3Parameter = parameters.getRawParameterValue("fxSlot3");
+    fxBypass1Parameter = parameters.getRawParameterValue("fxBypass1");
+    fxBypass2Parameter = parameters.getRawParameterValue("fxBypass2");
+    fxBypass3Parameter = parameters.getRawParameterValue("fxBypass3");
+
 }
 
 AudioPluginAudioProcessor::~AudioPluginAudioProcessor()
@@ -106,11 +124,11 @@ void AudioPluginAudioProcessor::initialiseGraph(){
     mainProcessor->clear();
     audioInputNode = mainProcessor->addNode (std::make_unique<AudioGraphIOProcessor>
 (AudioGraphIOProcessor::audioInputNode));
-    audioInputNode = mainProcessor->addNode (std::make_unique<AudioGraphIOProcessor>
+    audioOutputNode = mainProcessor->addNode (std::make_unique<AudioGraphIOProcessor>
 (AudioGraphIOProcessor::audioOutputNode));
-    audioInputNode = mainProcessor->addNode (std::make_unique<AudioGraphIOProcessor>
+    midiInputNode = mainProcessor->addNode (std::make_unique<AudioGraphIOProcessor>
 (AudioGraphIOProcessor::midiInputNode));
-    audioInputNode = mainProcessor->addNode (std::make_unique<AudioGraphIOProcessor>
+    midiOutputNode = mainProcessor->addNode (std::make_unique<AudioGraphIOProcessor>
 (AudioGraphIOProcessor::midiOutputNode));
     connectAudioNodes();
     connectMidiNodes();
@@ -118,8 +136,123 @@ void AudioPluginAudioProcessor::initialiseGraph(){
 }
 
 void AudioPluginAudioProcessor::updateGraph(){
+    bool hasChanged = false;
 
-} 
+    // Create arrays for parameters for traversal
+    juce::Array<juce::AudioParameterChoice*> choices { dynamic_cast<juce::AudioParameterChoice*>(parameters.getParameter("fxSlot1")),
+                                                       dynamic_cast<juce::AudioParameterChoice*>(parameters.getParameter("fxSlot2")),
+                                                       dynamic_cast<juce::AudioParameterChoice*>(parameters.getParameter("fxSlot3"))};
+    juce::Array<juce::AudioParameterBool*> fxBypasses { dynamic_cast<juce::AudioParameterBool*>(parameters.getParameter("fxBypass1")),
+                                                        dynamic_cast<juce::AudioParameterBool*>(parameters.getParameter("fxBypass2")),
+                                                        dynamic_cast<juce::AudioParameterBool*>(parameters.getParameter("fxBypass3"))};
+
+    // Add node slots
+    juce::ReferenceCountedArray<Node> slots;
+    slots.add (slot1Node);
+    slots.add (slot2Node);
+    slots.add (slot3Node);
+    
+    for (int i = 0; i < choices.size(); ++i){
+        auto& choice = choices.getReference(i);
+        auto slot = slots.getUnchecked (i);
+        if (choice->getIndex() == 0)
+        {
+            if (slot != nullptr)
+            {
+                mainProcessor->removeNode (slot.get());
+                slots.set(i, nullptr);
+                hasChanged = true;
+            }
+        }
+        else if (choice->getIndex() == 1)
+        {
+            if (slot != nullptr)
+            {
+                if (slot->getProcessor()->getName() == "Oscillator")
+                    continue;
+                mainProcessor->removeNode (slot.get());
+            }
+            slots.set (i, mainProcessor->addNode (std::make_unique<OscillatorProcessor>()));
+            hasChanged = true;
+        }
+        else if (choice->getIndex() == 2)
+        {
+            if(slot != nullptr)
+            {
+                if(slot->getProcessor()->getName() == "Gain")
+                    continue;
+                mainProcessor->removeNode (slot.get());
+            }
+            slots.set (i, mainProcessor->addNode (std::make_unique<GainProcessor>()));
+            hasChanged = true;
+        }
+        else if (choice->getIndex() == 2)
+        {
+            if(slot != nullptr)
+            {
+                if(slot->getProcessor()->getName() == "Filter")
+                    continue;
+                mainProcessor->removeNode (slot.get());
+            }
+            slots.set (i, mainProcessor->addNode (std::make_unique<FilterProcessor>()));
+            hasChanged = true;
+        }
+    }
+
+    if(hasChanged)
+    {
+        for (auto connection : mainProcessor->getConnections())
+            mainProcessor->removeConnection(connection);
+        juce::ReferenceCountedArray<Node> activeSlots;
+        for (auto slot : slots)
+        {
+            if (slot != nullptr)
+            {
+                activeSlots.add (slot);
+                slot->getProcessor()->setPlayConfigDetails (getMainBusNumInputChannels(),
+                    getMainBusNumOutputChannels(),
+                    getSampleRate(),
+                    getBlockSize());
+            }
+        }
+        if (activeSlots.isEmpty())
+        {
+            connectAudioNodes();
+        }
+        else
+        {
+            for (int i = 0; i < activeSlots.size() - 1; ++i) 
+            {
+                for (int channel = 0; channel < 2; ++channel)
+                    mainProcessor->addConnection ({ {activeSlots.getUnchecked (i)->nodeID, channel },
+                                                  { activeSlots.getUnchecked (i + 1)->nodeID, channel } });
+            }
+            for (int channel = 0; channel < 2; ++channel)
+            {
+                mainProcessor->addConnection ({ { audioInputNode->nodeID, channel },
+                    { activeSlots.getFirst()->nodeID, channel } });
+                mainProcessor->addConnection ({ { activeSlots.getLast()->nodeID, channel },
+                    { audioOutputNode->nodeID, channel } });
+            }
+        }
+        connectMidiNodes();
+        for (auto node : mainProcessor->getNodes())
+            node->getProcessor()->enableAllBuses();
+    }
+    for (int i = 0; i < 3; ++i)
+    {
+        auto slot = slots.getUnchecked(i);
+        auto& bypass = fxBypasses.getReference(i);
+        if (slot != nullptr)
+            slot->setBypassed (bypass->get());
+    }
+    audioInputNode->setBypassed (muteInput->get());
+    slot1Node = slots.getUnchecked(0);
+    slot2Node = slots.getUnchecked(1);
+    slot3Node = slots.getUnchecked(2);
+}
+    
+
 
 void AudioPluginAudioProcessor::connectAudioNodes(){
     for (int channel = 0; channel < 2; ++channel)
@@ -244,7 +377,7 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     }
     */
 
-    juce::MidiBuffer processedMidi;
+    /*juce::MidiBuffer processedMidi;
     for(const auto metadata : midiMessages)
     {
         auto message = metadata.getMessage();
@@ -259,7 +392,7 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     }
     midiMessages.swapWith(processedMidi);
 
-
+    */
 
 
     mainProcessor->processBlock(buffer, midiMessages);

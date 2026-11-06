@@ -11,13 +11,17 @@ CMakeScripts/
 cmake_install.cmake
 compile_commands.json
 CTestTestfile.cmake
+audioplugin_artefacts/
 _deps/
 Testing/
+cmake/
 
 # CPM cache (if you're not setting CPM_SOURCE_CACHE outside the repo)
 .cache/
 cpm-cache/
+cpm-package-lock.cmake
 CPM_modules/
+CPM_0.34.0.cmake/
 
 # Editor / IDE
 .vs/
@@ -42,3 +46,7 @@ Thumbs.db
 *.vst3
 *.component
 *.aaxplugin
+vst3_helpers/
+
+# Scripts
+clean.sh
