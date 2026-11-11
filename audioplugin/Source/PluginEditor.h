@@ -7,11 +7,6 @@ class AudioPluginAudioProcessorEditor final : public  juce::AudioProcessorEditor
                                               private juce::Slider::Listener
 {
 public:
-    enum{
-        paramControlHeight = 40,
-        paramLabelWidth  = 80,
-        paramSliderWidth   = 300
-    };
 
     typedef juce::AudioProcessorValueTreeState::SliderAttachment SliderAttachment;
     typedef juce::AudioProcessorValueTreeState::ButtonAttachment ButtonAttachment;

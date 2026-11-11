@@ -6,16 +6,21 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
                                                                   juce::AudioProcessorValueTreeState& vts)
     : AudioProcessorEditor (&p), audioProcessor (p), valueTreeState(vts)
 {
+    /*
     gainLabel.setText("Gain", juce::dontSendNotification);
     addAndMakeVisible(gainLabel);
     addAndMakeVisible(gainSlider);
 
     invertButton.setButtonText("Invert Phase");
     addAndMakeVisible(invertButton);
-   
+    */ 
     // Mute input
     muteInputButton.setButtonText("Mute Input");
     muteInputButton.setToggleState(true, juce::dontSendNotification);
+
+    muteInputAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>
+        (vts, "muteInput", muteInputButton);
+
     addAndMakeVisible(muteInputButton);
 
     // Combo box
@@ -26,24 +31,41 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     addAndMakeVisible(fxSlot1Label);
     addAndMakeVisible(fxSlot2Label);
     addAndMakeVisible(fxSlot3Label);
-
+    
     fxSlot1CB.addItemList(processorChoices, 1);
     fxSlot2CB.addItemList(processorChoices, 1);
     fxSlot3CB.addItemList(processorChoices, 1);
 
+    fxSlot1CBAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>
+        (vts, "fxSlot1", fxSlot1CB);
+    fxSlot2CBAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>
+        (vts, "fxSlot2", fxSlot2CB);
+    fxSlot3CBAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>
+        (vts, "fxSlot3", fxSlot3CB);
+
     addAndMakeVisible(fxSlot1CB);
     addAndMakeVisible(fxSlot2CB);
     addAndMakeVisible(fxSlot3CB);
+
+    fxSlot1Label.attachToComponent(&fxSlot1CB, true);
+    fxSlot2Label.attachToComponent(&fxSlot2CB, true);
+    fxSlot3Label.attachToComponent(&fxSlot3CB, true);
     
     // Bypass buttons
     fxBypassSlot1.setButtonText("FX Bypass 1");
     fxBypassSlot2.setButtonText("FX Bypass 2");
     fxBypassSlot3.setButtonText("FX Bypass 3");
+    
+    fxBypassSlot1Attachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>
+        (vts, "fxBypass1", fxBypassSlot1);
+    fxBypassSlot2Attachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>
+        (vts, "fxBypass2", fxBypassSlot2);
+    fxBypassSlot3Attachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>
+        (vts, "fxBypass3", fxBypassSlot3);
 
     addAndMakeVisible(fxBypassSlot1);
     addAndMakeVisible(fxBypassSlot2);
     addAndMakeVisible(fxBypassSlot3);
-
 
     p.initialiseGraph();
     setSize(600, 400);
@@ -70,6 +92,7 @@ void AudioPluginAudioProcessorEditor::sliderValueChanged(juce::Slider* slider)
 
 AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
 {
+    /*
     invertAttachment.reset(new ButtonAttachment(valueTreeState, "invertPhase", invertButton));
 
     gainAttachment.reset(new SliderAttachment(valueTreeState, "gain", gainSlider));
@@ -83,6 +106,7 @@ AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
     fxBypassSlot1Attachment.reset(new ButtonAttachment(valueTreeState, "fxBypass1", fxBypassSlot1));
     fxBypassSlot2Attachment.reset(new ButtonAttachment(valueTreeState, "fxBypass2", fxBypassSlot2));
     fxBypassSlot3Attachment.reset(new ButtonAttachment(valueTreeState, "fxBypass3", fxBypassSlot3));
+    */
 }
 
 //==============================================================================
@@ -132,3 +156,4 @@ void AudioPluginAudioProcessorEditor::resized()
 
     gainSlider.setBounds(40, 30, 20, getHeight() - 60);
 }
+

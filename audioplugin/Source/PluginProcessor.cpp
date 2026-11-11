@@ -9,10 +9,11 @@ juce::AudioProcessorValueTreeState::ParameterLayout
 AudioPluginAudioProcessor::createParameterLayout()
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
+    
 
     layout.add(std::make_unique<juce::AudioParameterFloat> (juce::ParameterID{"gain", 1}, "Gain", juce::NormalisableRange<float> (0.0f, 1.0f), 0.5f)); 
     layout.add(std::make_unique<juce::AudioParameterBool>  (juce::ParameterID{"invertPhase", 1}, "Invert Phase", false));
-    layout.add(std::make_unique<juce::AudioParameterBool>  (juce::ParameterID{"muteInput", 1}, "Mute Input", true ));
+    layout.add(std::make_unique<juce::AudioParameterBool>  (juce::ParameterID{"muteInput", 1}, "Mute Input", false));
 
     layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID{"fxSlot1", 1}, "FX Slot 1", processorChoices, 0));
     layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID{"fxSlot2", 1}, "FX Slot 2", processorChoices, 0));
@@ -40,6 +41,7 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
 
     gainParameter = parameters.getRawParameterValue("gain");
     phaseParameter = parameters.getRawParameterValue("invertPhase");
+    /*
     muteInputParameter = parameters.getRawParameterValue("muteInput");
     fxSlot1Parameter = parameters.getRawParameterValue("fxSlot1");
     fxSlot2Parameter = parameters.getRawParameterValue("fxSlot2");
@@ -47,7 +49,16 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
     fxBypass1Parameter = parameters.getRawParameterValue("fxBypass1");
     fxBypass2Parameter = parameters.getRawParameterValue("fxBypass2");
     fxBypass3Parameter = parameters.getRawParameterValue("fxBypass3");
-
+    */
+     muteInput = dynamic_cast<juce::AudioParameterBool*>(parameters.getParameter("muteInput"));
+     fxSlot1 = dynamic_cast<juce::AudioParameterChoice*>(parameters.getParameter("fxSlot1"));
+     fxSlot2 = dynamic_cast<juce::AudioParameterChoice*>(parameters.getParameter("fxSlot2"));
+     fxSlot3 = dynamic_cast<juce::AudioParameterChoice*>(parameters.getParameter("fxSlot3"));
+     fxBypass1 = dynamic_cast<juce::AudioParameterBool*>(parameters.getParameter("fxBypass1"));
+     fxBypass2 = dynamic_cast<juce::AudioParameterBool*>(parameters.getParameter("fxBypass2"));
+     fxBypass3 = dynamic_cast<juce::AudioParameterBool*>(parameters.getParameter("fxBypass3"));
+     
+     startTimer(100);
 }
 
 AudioPluginAudioProcessor::~AudioPluginAudioProcessor()
@@ -139,12 +150,8 @@ void AudioPluginAudioProcessor::updateGraph(){
     bool hasChanged = false;
 
     // Create arrays for parameters for traversal
-    juce::Array<juce::AudioParameterChoice*> choices { dynamic_cast<juce::AudioParameterChoice*>(parameters.getParameter("fxSlot1")),
-                                                       dynamic_cast<juce::AudioParameterChoice*>(parameters.getParameter("fxSlot2")),
-                                                       dynamic_cast<juce::AudioParameterChoice*>(parameters.getParameter("fxSlot3"))};
-    juce::Array<juce::AudioParameterBool*> fxBypasses { dynamic_cast<juce::AudioParameterBool*>(parameters.getParameter("fxBypass1")),
-                                                        dynamic_cast<juce::AudioParameterBool*>(parameters.getParameter("fxBypass2")),
-                                                        dynamic_cast<juce::AudioParameterBool*>(parameters.getParameter("fxBypass3"))};
+    juce::Array<juce::AudioParameterChoice*> choices { fxSlot1, fxSlot2, fxSlot3 };
+    juce::Array<juce::AudioParameterBool*> fxBypasses { fxBypass1, fxBypass2, fxBypass3 };
 
     // Add node slots
     juce::ReferenceCountedArray<Node> slots;
@@ -229,10 +236,10 @@ void AudioPluginAudioProcessor::updateGraph(){
             }
             for (int channel = 0; channel < 2; ++channel) // Link first active slot to audio input node and last active slot to audio output node 
             {
-                mainProcessor->addConnection ({ { audioInputNode->nodeID, channel },
-                    { activeSlots.getFirst()->nodeID, channel } });
-                mainProcessor->addConnection ({ { activeSlots.getLast()->nodeID, channel },
-                    { audioOutputNode->nodeID, channel } });
+                mainProcessor->addConnection ({ { audioInputNode->nodeID,          channel },
+                                                { activeSlots.getFirst()->nodeID,  channel } });
+                mainProcessor->addConnection ({ { activeSlots.getLast()->nodeID,   channel },
+                                                { audioOutputNode->nodeID,         channel } });
             }
         }
         connectMidiNodes();
@@ -246,7 +253,7 @@ void AudioPluginAudioProcessor::updateGraph(){
         if (slot != nullptr)
             slot->setBypassed (bypass->get());
     }
-    audioInputNode->setBypassed (muteInputParameter);
+    audioInputNode->setBypassed (muteInput->get());
     slot1Node = slots.getUnchecked(0);
     slot2Node = slots.getUnchecked(1);
     slot3Node = slots.getUnchecked(2);
@@ -282,9 +289,9 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
     previousGain = *gainParameter * phase;
 
     mainProcessor->setPlayConfigDetails(getMainBusNumInputChannels(),
-        getMainBusNumOutputChannels(),
-        sampleRate,
-        samplesPerBlock);
+                                        getMainBusNumOutputChannels(),
+                                        sampleRate,
+                                        samplesPerBlock);
     mainProcessor->prepareToPlay(sampleRate, samplesPerBlock);
     initialiseGraph();
 
@@ -333,6 +340,7 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
     for (int i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear(i, 0, buffer.getNumSamples());
+
     updateGraph();
 
     auto phase = *phaseParameter ? -1.0f : 1.0f;
@@ -345,7 +353,6 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         previousGain = currentGain;
     }
     
-    updateGraph();
     // In case we have more outputs than inputs, this code clears any output
     // channels that didn't contain input data, (because these aren't
     // guaranteed to be empty - they may contain garbage).
@@ -353,10 +360,6 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     // when they first compile a plugin, but obviously you don't need to keep
     // this code if your algorithm always overwrites all the output channels.
 
-    /*
-    for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
-        buffer.clear (i, 0, buffer.getNumSamples());
-    */
 
     // This is the place where you'd normally do the guts of your plugin's
     // audio processing...
@@ -399,6 +402,10 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     mainProcessor->processBlock(buffer, midiMessages);
 }
 
+void AudioPluginAudioProcessor::timerCallback()
+{
+    updateGraph();
+}
 //==============================================================================
 bool AudioPluginAudioProcessor::hasEditor() const
 {

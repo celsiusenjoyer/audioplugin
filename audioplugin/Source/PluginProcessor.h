@@ -6,7 +6,9 @@ using AudioGraphIOProcessor = juce::AudioProcessorGraph::AudioGraphIOProcessor;
 using Node = juce::AudioProcessorGraph::Node;
 
 //==============================================================================
-class AudioPluginAudioProcessor final : public juce::AudioProcessor
+class AudioPluginAudioProcessor final : public juce::AudioProcessor,
+                                        private juce::Timer
+
 {
 public:
     float noteOnVel;
@@ -27,6 +29,8 @@ public:
     bool isBusesLayoutSupported (const BusesLayout& layouts) const override;
 
     void processBlock (juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
+
+    void timerCallback() override;
     using AudioProcessor::processBlock;
 
     //==============================================================================
@@ -59,12 +63,25 @@ private:
     
     juce::StringArray processorChoices { "Empty", "Oscillator", "Gain", "Filter" };
     std::unique_ptr<juce::AudioProcessorGraph> mainProcessor;
-    //juce::AudioParameterBool* muteInput;
+
+    std::atomic<float>* phaseParameter = nullptr;
+    std::atomic<float>* gainParameter = nullptr;
+    
+    juce::AudioParameterBool* muteInput = nullptr;
+
+    juce::AudioParameterChoice* fxSlot1 = nullptr;
+    juce::AudioParameterChoice* fxSlot2 = nullptr;
+    juce::AudioParameterChoice* fxSlot3 = nullptr;
+
+    juce::AudioParameterBool* fxBypass1 = nullptr;
+    juce::AudioParameterBool* fxBypass2 = nullptr;
+    juce::AudioParameterBool* fxBypass3 = nullptr;
 
     Node::Ptr audioInputNode;
     Node::Ptr audioOutputNode;
     Node::Ptr midiInputNode;
     Node::Ptr midiOutputNode;
+
     Node::Ptr slot1Node;
     Node::Ptr slot2Node;
     Node::Ptr slot3Node;
@@ -74,15 +91,6 @@ private:
 
     float previousGain;
     
-    std::atomic<float>* phaseParameter = nullptr;
-    std::atomic<float>* gainParameter = nullptr;
-    std::atomic<float>* muteInputParameter = nullptr;
-    std::atomic<float>* fxSlot1Parameter = nullptr;
-    std::atomic<float>* fxSlot2Parameter = nullptr;
-    std::atomic<float>* fxSlot3Parameter = nullptr;
-    std::atomic<float>* fxBypass1Parameter = nullptr;
-    std::atomic<float>* fxBypass2Parameter = nullptr;
-    std::atomic<float>* fxBypass3Parameter = nullptr;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessor)
 };
