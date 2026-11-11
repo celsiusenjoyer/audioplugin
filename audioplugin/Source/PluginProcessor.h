@@ -59,7 +59,7 @@ private:
     
     juce::StringArray processorChoices { "Empty", "Oscillator", "Gain", "Filter" };
     std::unique_ptr<juce::AudioProcessorGraph> mainProcessor;
-    juce::AudioParameterBool* muteInput;
+    //juce::AudioParameterBool* muteInput;
 
     Node::Ptr audioInputNode;
     Node::Ptr audioOutputNode;

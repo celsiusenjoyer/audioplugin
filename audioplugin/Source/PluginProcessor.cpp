@@ -12,7 +12,7 @@ AudioPluginAudioProcessor::createParameterLayout()
 
     layout.add(std::make_unique<juce::AudioParameterFloat> (juce::ParameterID{"gain", 1}, "Gain", juce::NormalisableRange<float> (0.0f, 1.0f), 0.5f)); 
     layout.add(std::make_unique<juce::AudioParameterBool>  (juce::ParameterID{"invertPhase", 1}, "Invert Phase", false));
-    layout.add(std::make_unique<juce::AudioParameterBool>  (juce::ParameterID{"mute", 1}, "Mute Input", true ));
+    layout.add(std::make_unique<juce::AudioParameterBool>  (juce::ParameterID{"muteInput", 1}, "Mute Input", true ));
 
     layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID{"fxSlot1", 1}, "FX Slot 1", processorChoices, 0));
     layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID{"fxSlot2", 1}, "FX Slot 2", processorChoices, 0));
@@ -227,7 +227,7 @@ void AudioPluginAudioProcessor::updateGraph(){
                     mainProcessor->addConnection ({ {activeSlots.getUnchecked (i)->nodeID, channel },
                                                   { activeSlots.getUnchecked (i + 1)->nodeID, channel } });
             }
-            for (int channel = 0; channel < 2; ++channel)
+            for (int channel = 0; channel < 2; ++channel) // Link first active slot to audio input node and last active slot to audio output node 
             {
                 mainProcessor->addConnection ({ { audioInputNode->nodeID, channel },
                     { activeSlots.getFirst()->nodeID, channel } });
@@ -246,7 +246,7 @@ void AudioPluginAudioProcessor::updateGraph(){
         if (slot != nullptr)
             slot->setBypassed (bypass->get());
     }
-    audioInputNode->setBypassed (muteInput->get());
+    audioInputNode->setBypassed (muteInputParameter);
     slot1Node = slots.getUnchecked(0);
     slot2Node = slots.getUnchecked(1);
     slot3Node = slots.getUnchecked(2);
@@ -344,7 +344,8 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         buffer.applyGainRamp(0, buffer.getNumSamples(), previousGain, currentGain);
         previousGain = currentGain;
     }
-
+    
+    updateGraph();
     // In case we have more outputs than inputs, this code clears any output
     // channels that didn't contain input data, (because these aren't
     // guaranteed to be empty - they may contain garbage).
