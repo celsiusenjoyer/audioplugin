@@ -6,6 +6,11 @@ GainProcessor::GainProcessor(){
 
 const juce::String GainProcessor::getName() const { return "Gain"; }
 
+void GainProcessor::setLevel(float newValue)
+{
+    gain.setGainLinear(newValue);
+}
+
 void GainProcessor::prepareToPlay (double sampleRate, int samplesPerBlock) 
 {
     juce::dsp::ProcessSpec spec { sampleRate, static_cast<juce::uint32> (samplesPerBlock), 2 };

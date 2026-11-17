@@ -1,13 +1,15 @@
 #pragma once
 
+#include "ReverbProcessor.h"
+
 #include <juce_audio_processors/juce_audio_processors.h>
+#include <juce_audio_devices/juce_audio_devices.h>
 
 using AudioGraphIOProcessor = juce::AudioProcessorGraph::AudioGraphIOProcessor;
 using Node = juce::AudioProcessorGraph::Node;
 
 //==============================================================================
-class AudioPluginAudioProcessor final : public juce::AudioProcessor,
-                                        private juce::Timer
+class AudioPluginAudioProcessor final : public juce::AudioProcessor
 
 {
 public:
@@ -19,6 +21,7 @@ public:
     //==============================================================================
     void initialiseGraph();
     void updateGraph();
+    void connectSynthEngine();
     void connectAudioNodes();
     void connectMidiNodes();
 
@@ -30,7 +33,6 @@ public:
 
     void processBlock (juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
 
-    void timerCallback() override;
     using AudioProcessor::processBlock;
 
     //==============================================================================
@@ -57,26 +59,40 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
+    juce::MidiMessageCollector& getMidiMessageCollector() noexcept;
+
 private:
     //==============================================================================
     juce::Random random;
     
-    juce::StringArray processorChoices { "Empty", "Oscillator", "Gain", "Filter" };
+    juce::StringArray processorChoices { "Empty", "Reverb", "Gain", "Filter" };
+    juce::StringArray oscillatorWaveformChoices { "sinewave", "sawtooth" };
     std::unique_ptr<juce::AudioProcessorGraph> mainProcessor;
 
-    std::atomic<float>* phaseParameter = nullptr;
-    std::atomic<float>* gainParameter = nullptr;
+    std::atomic<float>* phase = nullptr;
     
-    juce::AudioParameterBool* muteInput = nullptr;
+    // Gain
+    std::atomic<float>* gain = nullptr;
 
+    float previousGain;
+
+    // Mute
+    juce::AudioParameterBool* muteInput = nullptr;
+    
+    // FX Slots
     juce::AudioParameterChoice* fxSlot1 = nullptr;
     juce::AudioParameterChoice* fxSlot2 = nullptr;
     juce::AudioParameterChoice* fxSlot3 = nullptr;
-
+    
+    // Bypass Slots
     juce::AudioParameterBool* fxBypass1 = nullptr;
     juce::AudioParameterBool* fxBypass2 = nullptr;
     juce::AudioParameterBool* fxBypass3 = nullptr;
-
+    
+    // Oscillator Waveforms
+    juce::AudioParameterChoice* osc1Waveform = nullptr;
+    juce::AudioParameterChoice* osc2Waveform = nullptr;
+    
     Node::Ptr audioInputNode;
     Node::Ptr audioOutputNode;
     Node::Ptr midiInputNode;
@@ -86,11 +102,13 @@ private:
     Node::Ptr slot2Node;
     Node::Ptr slot3Node;
 
+    Node::Ptr voiceNode; 
+
     juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
     juce::AudioProcessorValueTreeState parameters;
-
-    float previousGain;
     
-
+    ReverbProcessor reverbEngine{parameters};
+    juce::MidiMessageCollector midiMessageCollector;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessor)
 };
+

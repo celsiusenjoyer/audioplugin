@@ -35,12 +35,16 @@ set(SourceFiles
         Source/PluginProcessor.h
         Source/ProcessorBase.cpp
         Source/ProcessorBase.h
-        Source/OscillatorProcessor.cpp
+        Source/OscillatorProcessor.tpp
         Source/OscillatorProcessor.h
         Source/GainProcessor.cpp
         Source/GainProcessor.h
         Source/FilterProcessor.cpp
         Source/FilterProcessor.h
+        Source/Voice.cpp
+        Source/Voice.h
+        Source/ReverbProcessor.cpp
+        Source/ReverbProcessor.h
 )
 
 # Change these to your own preferences

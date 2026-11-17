@@ -4,15 +4,30 @@
 
 #include <cmath>
 
+template <typename Type>
 class OscillatorProcessor : public ProcessorBase
 {
 public:
-    OscillatorProcessor();
-    const juce::String getName() const override; 
-    void prepareToPlay (double, int) override;
-    void processBlock (juce::AudioSampleBuffer&, juce::MidiBuffer&) override;
-    void reset() override;
-private:
-    juce::dsp::Oscillator<float> oscillator;
 
+
+    OscillatorProcessor();
+    void setWaveform(juce::AudioParameterChoice*);
+    void reset() noexcept;
+    void prepare(const juce::dsp::ProcessSpec&);
+    void setFrequency(Type, bool);
+    void setLevel(Type);
+    template <typename ProcessContext>
+    void process(const ProcessContext&) noexcept;
+private:
+
+    enum {
+        oscIndex,
+        gainIndex
+    };
+    
+    juce::dsp::ProcessorChain<juce::dsp::Oscillator<Type>, juce::dsp::Gain<Type>> processorChain;
+
+    float previousGain;
 };
+
+#include "OscillatorProcessor.tpp"

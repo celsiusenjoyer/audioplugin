@@ -1,4 +1,3 @@
-#include "PluginProcessor.h"
 #include "PluginEditor.h"
 
 //==============================================================================
@@ -6,14 +5,19 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
                                                                   juce::AudioProcessorValueTreeState& vts)
     : AudioProcessorEditor (&p), audioProcessor (p), valueTreeState(vts)
 {
-    /*
-    gainLabel.setText("Gain", juce::dontSendNotification);
+
+    //invertButton.setButtonText("Invert Phase");
+    //addAndMakeVisible(invertButton);
+
+    // Gain
+    gainLabel.setText("Noise level in dB", juce::dontSendNotification);
+
+    gainAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>
+        (vts, "gain", gainSlider);
+
     addAndMakeVisible(gainLabel);
     addAndMakeVisible(gainSlider);
 
-    invertButton.setButtonText("Invert Phase");
-    addAndMakeVisible(invertButton);
-    */ 
     // Mute input
     muteInputButton.setButtonText("Mute Input");
     muteInputButton.setToggleState(true, juce::dontSendNotification);
@@ -66,47 +70,20 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     addAndMakeVisible(fxBypassSlot1);
     addAndMakeVisible(fxBypassSlot2);
     addAndMakeVisible(fxBypassSlot3);
+    
+    // Midi keyboard
+    addAndMakeVisible(midiKeyboardComponent);
+
+    midiKeyboardComponent.setMidiChannel(2);
+    midiKeyboardState.addListener(&audioProcessor.getMidiMessageCollector());
 
     p.initialiseGraph();
     setSize(600, 400);
-
-    /* MIDI SLIDER
-    midiVolume.setSliderStyle(juce::Slider::LinearBarVertical);
-    midiVolume.setRange(0.0, 127.0, 1.0);
-    midiVolume.setTextBoxStyle(juce::Slider::NoTextBox, false, 90, 0);
-    midiVolume.setPopupDisplayEnabled(true, false, this);
-    midiVolume.setTextValueSuffix(" Volume");
-    midiVolume.setValue(1.0);
-    midiVolume.addListener(this);
-
-    addAndMakeVisible(&midiVolume);
-    */
-
-}
-
-
-void AudioPluginAudioProcessorEditor::sliderValueChanged(juce::Slider* slider)
-{
-    audioProcessor.noteOnVel = midiVolume.getValue();
 }
 
 AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
 {
-    /*
-    invertAttachment.reset(new ButtonAttachment(valueTreeState, "invertPhase", invertButton));
-
-    gainAttachment.reset(new SliderAttachment(valueTreeState, "gain", gainSlider));
-
-    muteInputAttachment.reset(new ButtonAttachment(valueTreeState, "muteInput", muteInputButton));
-
-    fxSlot1CBAttachment.reset(new ComboBoxAttachment(valueTreeState, "fxSlot1", fxSlot1CB));
-    fxSlot2CBAttachment.reset(new ComboBoxAttachment(valueTreeState, "fxSlot2", fxSlot2CB));
-    fxSlot3CBAttachment.reset(new ComboBoxAttachment(valueTreeState, "fxSlot3", fxSlot3CB));
-
-    fxBypassSlot1Attachment.reset(new ButtonAttachment(valueTreeState, "fxBypass1", fxBypassSlot1));
-    fxBypassSlot2Attachment.reset(new ButtonAttachment(valueTreeState, "fxBypass2", fxBypassSlot2));
-    fxBypassSlot3Attachment.reset(new ButtonAttachment(valueTreeState, "fxBypass3", fxBypassSlot3));
-    */
+    midiKeyboardState.removeListener(&audioProcessor.getMidiMessageCollector());
 }
 
 //==============================================================================
@@ -123,15 +100,13 @@ void AudioPluginAudioProcessorEditor::resized()
 {
     // This is generally where you'll want to lay out the positions of any
     // subcomponents in your editor..
-
-    // midiVolume.setBounds(40, 30, 20, getHeight() - 60);
     juce::FlexBox fb;
     fb.flexDirection  = juce::FlexBox::Direction::column;
     fb.justifyContent = juce::FlexBox::JustifyContent::center;
     fb.alignContent   = juce::FlexBox::AlignContent::center;
 
-    auto fbWidth = (float) getWidth() / 2.0f;
-    auto fbHeight  = (float) getHeight() / 7.0f;
+    auto fbWidth = (float) getWidth() / 4.0f;
+    auto fbHeight  = (float) getHeight() / 14.0f;
     
     juce::FlexItem FIMuteInput (fbWidth, fbHeight, muteInputButton);
 
@@ -153,7 +128,12 @@ void AudioPluginAudioProcessorEditor::resized()
                          });
 
     fb.performLayout (getLocalBounds().toFloat());
-
-    gainSlider.setBounds(40, 30, 20, getHeight() - 60);
+    
+    auto area = getLocalBounds();
+    midiKeyboardComponent.setBounds (area.removeFromTop (80).reduced (8));
+    gainSlider.setBounds(20, 20, 360, 30);
 }
 
+void AudioPluginAudioProcessorEditor::sliderValueChanged(juce::Slider* slider){
+
+}
