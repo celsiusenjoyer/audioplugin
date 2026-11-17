@@ -3,7 +3,7 @@
 #include "OscillatorProcessor.h"
 #include "FilterProcessor.h"
 #include "GainProcessor.h"
-#include "ReverbProcessor.h"
+#include "AudioEngine.h"
 
 #include <iostream>
 
@@ -145,15 +145,10 @@ void AudioPluginAudioProcessor::initialiseGraph(){
     midiOutputNode = mainProcessor->addNode (std::make_unique<AudioGraphIOProcessor>
 (AudioGraphIOProcessor::midiOutputNode));
 
-    voiceNode = mainProcessor->addNode (std::make_unique<Voice>(parameters));
+    audioEngineNode = mainProcessor->addNode (std::make_unique<AudioEngine>(parameters));
     
     connectAudioNodes();
     connectMidiNodes();
-
-}
-
-// Will always connect to fxSlot1
-void AudioPluginAudioProcessor::connectSynthEngine(){
 
 }
 
@@ -186,11 +181,11 @@ void AudioPluginAudioProcessor::updateGraph(){
         {
             if (slot != nullptr)
             {
-                if (slot->getProcessor()->getName() == "Reverb") 
+                if (slot->getProcessor()->getName() == "Processor") 
                     continue;
                 mainProcessor->removeNode (slot.get());
             }
-            slots.set (i, mainProcessor->addNode (std::make_unique<ReverbProcessor>(parameters)));
+            slots.set (i, mainProcessor->addNode (std::make_unique<OscillatorProcessor<float>>()));
             hasChanged = true;
         }
         else if (choice->getIndex() == 2)
@@ -279,7 +274,7 @@ void AudioPluginAudioProcessor::connectAudioNodes(){
     if(slot1Node == nullptr){
         for (int channel = 0; channel < 2; ++channel)
         {
-            mainProcessor->addConnection ({ { voiceNode->nodeID, channel },
+            mainProcessor->addConnection ({ { audioEngineNode->nodeID, channel },
                                           { audioOutputNode->nodeID, channel   }});
         }
     }
@@ -287,7 +282,7 @@ void AudioPluginAudioProcessor::connectAudioNodes(){
     {
         for (int channel = 0; channel < 2; ++channel)
         {
-            mainProcessor->addConnection ({ { voiceNode->nodeID, channel },
+            mainProcessor->addConnection ({ { audioEngineNode->nodeID, channel },
                                           { slot1Node->nodeID, channel   }});
         }
     }
@@ -295,10 +290,10 @@ void AudioPluginAudioProcessor::connectAudioNodes(){
 }
 
 void AudioPluginAudioProcessor::connectMidiNodes(){
-    // Connect MIDI input to the Voice node which contains the synth engine
+    // Connect MIDI input to the audio Engine node which contains the synth engine
     mainProcessor->addConnection ({ { midiInputNode->nodeID,
 juce::AudioProcessorGraph::midiChannelIndex },
-    { voiceNode->nodeID, juce::AudioProcessorGraph::midiChannelIndex } });
+    { audioEngineNode->nodeID, juce::AudioProcessorGraph::midiChannelIndex } });
 }
 
 //==============================================================================
@@ -315,7 +310,7 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
 
     auto phase_ = *phase ? -1.0f : 1.0f;
     previousGain = *gain * phase_;
-    reverbEngine.prepare({ sampleRate, (juce::uint32) samplesPerBlock, 2 });
+    audioEngine.prepare({ sampleRate, (juce::uint32) samplesPerBlock, 2 });
     midiMessageCollector.reset (sampleRate);
 
     mainProcessor->setPlayConfigDetails(getMainBusNumInputChannels(),
@@ -373,7 +368,7 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     for (int i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear(i, 0, buffer.getNumSamples());
     
-    reverbEngine.renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
+    audioEngine.renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
 
     updateGraph();
 

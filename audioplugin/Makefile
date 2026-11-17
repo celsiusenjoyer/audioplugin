@@ -246,6 +246,30 @@ install_prep/all: cmake_check_build_system
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 install_prep/all
 .PHONY : install_prep/all
 
+Source/AudioEngine.o: Source/AudioEngine.cpp.o
+.PHONY : Source/AudioEngine.o
+
+# target to build an object file
+Source/AudioEngine.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/audioplugin.dir/build.make CMakeFiles/audioplugin.dir/Source/AudioEngine.cpp.o
+.PHONY : Source/AudioEngine.cpp.o
+
+Source/AudioEngine.i: Source/AudioEngine.cpp.i
+.PHONY : Source/AudioEngine.i
+
+# target to preprocess a source file
+Source/AudioEngine.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/audioplugin.dir/build.make CMakeFiles/audioplugin.dir/Source/AudioEngine.cpp.i
+.PHONY : Source/AudioEngine.cpp.i
+
+Source/AudioEngine.s: Source/AudioEngine.cpp.s
+.PHONY : Source/AudioEngine.s
+
+# target to generate assembly for a file
+Source/AudioEngine.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/audioplugin.dir/build.make CMakeFiles/audioplugin.dir/Source/AudioEngine.cpp.s
+.PHONY : Source/AudioEngine.cpp.s
+
 Source/FilterProcessor.o: Source/FilterProcessor.cpp.o
 .PHONY : Source/FilterProcessor.o
 
@@ -365,30 +389,6 @@ Source/ProcessorBase.s: Source/ProcessorBase.cpp.s
 Source/ProcessorBase.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/audioplugin.dir/build.make CMakeFiles/audioplugin.dir/Source/ProcessorBase.cpp.s
 .PHONY : Source/ProcessorBase.cpp.s
-
-Source/ReverbProcessor.o: Source/ReverbProcessor.cpp.o
-.PHONY : Source/ReverbProcessor.o
-
-# target to build an object file
-Source/ReverbProcessor.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/audioplugin.dir/build.make CMakeFiles/audioplugin.dir/Source/ReverbProcessor.cpp.o
-.PHONY : Source/ReverbProcessor.cpp.o
-
-Source/ReverbProcessor.i: Source/ReverbProcessor.cpp.i
-.PHONY : Source/ReverbProcessor.i
-
-# target to preprocess a source file
-Source/ReverbProcessor.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/audioplugin.dir/build.make CMakeFiles/audioplugin.dir/Source/ReverbProcessor.cpp.i
-.PHONY : Source/ReverbProcessor.cpp.i
-
-Source/ReverbProcessor.s: Source/ReverbProcessor.cpp.s
-.PHONY : Source/ReverbProcessor.s
-
-# target to generate assembly for a file
-Source/ReverbProcessor.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/audioplugin.dir/build.make CMakeFiles/audioplugin.dir/Source/ReverbProcessor.cpp.s
-.PHONY : Source/ReverbProcessor.cpp.s
 
 Source/Voice.o: Source/Voice.cpp.o
 .PHONY : Source/Voice.o
@@ -1967,6 +1967,9 @@ help:
 	@echo "... audioplugin"
 	@echo "... audioplugin_Standalone"
 	@echo "... audioplugin_VST3"
+	@echo "... Source/AudioEngine.o"
+	@echo "... Source/AudioEngine.i"
+	@echo "... Source/AudioEngine.s"
 	@echo "... Source/FilterProcessor.o"
 	@echo "... Source/FilterProcessor.i"
 	@echo "... Source/FilterProcessor.s"
@@ -1982,9 +1985,6 @@ help:
 	@echo "... Source/ProcessorBase.o"
 	@echo "... Source/ProcessorBase.i"
 	@echo "... Source/ProcessorBase.s"
-	@echo "... Source/ReverbProcessor.o"
-	@echo "... Source/ReverbProcessor.i"
-	@echo "... Source/ReverbProcessor.s"
 	@echo "... Source/Voice.o"
 	@echo "... Source/Voice.i"
 	@echo "... Source/Voice.s"

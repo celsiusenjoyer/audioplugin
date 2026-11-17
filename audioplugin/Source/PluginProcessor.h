@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ReverbProcessor.h"
+#include "AudioEngine.h"
 
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_audio_devices/juce_audio_devices.h>
@@ -21,7 +21,6 @@ public:
     //==============================================================================
     void initialiseGraph();
     void updateGraph();
-    void connectSynthEngine();
     void connectAudioNodes();
     void connectMidiNodes();
 
@@ -65,7 +64,7 @@ private:
     //==============================================================================
     juce::Random random;
     
-    juce::StringArray processorChoices { "Empty", "Reverb", "Gain", "Filter" };
+    juce::StringArray processorChoices { "Empty", "Oscillator", "Gain", "Filter" };
     juce::StringArray oscillatorWaveformChoices { "sinewave", "sawtooth" };
     std::unique_ptr<juce::AudioProcessorGraph> mainProcessor;
 
@@ -102,12 +101,12 @@ private:
     Node::Ptr slot2Node;
     Node::Ptr slot3Node;
 
-    Node::Ptr voiceNode; 
+    Node::Ptr audioEngineNode; 
 
     juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
     juce::AudioProcessorValueTreeState parameters;
     
-    ReverbProcessor reverbEngine{parameters};
+    AudioEngine audioEngine{parameters};
     juce::MidiMessageCollector midiMessageCollector;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessor)
 };

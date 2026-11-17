@@ -43,8 +43,8 @@ set(SourceFiles
         Source/FilterProcessor.h
         Source/Voice.cpp
         Source/Voice.h
-        Source/ReverbProcessor.cpp
-        Source/ReverbProcessor.h
+        Source/AudioEngine.cpp
+        Source/AudioEngine.h
 )
 
 # Change these to your own preferences

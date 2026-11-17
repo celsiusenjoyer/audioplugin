@@ -3,12 +3,12 @@
 #include "ProcessorBase.h"
 #include "Voice.h"
 
-class ReverbProcessor : public ProcessorBase,
+class AudioEngine : public ProcessorBase,
                         public juce::MPESynthesiser
 {
 public:
 
-    ReverbProcessor(juce::AudioProcessorValueTreeState&);
+    AudioEngine(juce::AudioProcessorValueTreeState&);
     static constexpr int maxNumVoices = 16; 
 
     void prepare (const juce::dsp::ProcessSpec&) noexcept;
@@ -23,7 +23,7 @@ private:
         reverbIndex
     };
 
-    juce::dsp::ProcessorChain<juce::dsp::Reverb> reverbChain;
+    juce::dsp::ProcessorChain<juce::dsp::Reverb> fxChain;
 };
 
 
