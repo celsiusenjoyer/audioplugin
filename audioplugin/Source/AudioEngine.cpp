@@ -11,7 +11,13 @@ AudioEngine::AudioEngine(juce::AudioProcessorValueTreeState& vts)
 
 const juce::String AudioEngine::getName() const 
 {
-    return { "Reverb" };
+    return { "AudioEngine" };
+}
+
+void AudioEngine::prepareToPlay(double sampleRate, int samplesPerBlock)
+{
+    juce::dsp::ProcessSpec spec { sampleRate, static_cast<juce::uint32> (samplesPerBlock), 2 };
+    prepare(spec);
 }
 
 void AudioEngine::prepare (const juce::dsp::ProcessSpec& spec) noexcept
@@ -24,6 +30,11 @@ void AudioEngine::prepare (const juce::dsp::ProcessSpec& spec) noexcept
     fxChain.prepare(spec);
 }
 
+void AudioEngine::processBlock(juce::AudioSampleBuffer& buffer, juce::MidiBuffer& midiBuffer)
+{
+    renderNextBlock (buffer, midiBuffer, 0, buffer.getNumSamples());
+}
+
 void AudioEngine::renderNextSubBlock(juce::AudioBuffer<float>& outputAudio, int startSample, int numSamples)
 {
     MPESynthesiser::renderNextSubBlock(outputAudio, startSample, numSamples);
@@ -32,4 +43,9 @@ void AudioEngine::renderNextSubBlock(juce::AudioBuffer<float>& outputAudio, int 
     auto blockToUse = block.getSubBlock ((size_t) startSample, (size_t) numSamples);
     auto contextToUse = juce::dsp::ProcessContextReplacing<float> (blockToUse);
     fxChain.process(contextToUse);
+}
+
+bool AudioEngine::acceptsMidi() const
+{
+    return true;
 }

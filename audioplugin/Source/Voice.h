@@ -33,6 +33,8 @@ private:
 
    juce::AudioParameterChoice* osc1Waveform;
    juce::AudioParameterChoice* osc2Waveform;
+   juce::AudioParameterBool*   osc1Enabled;
+   juce::AudioParameterBool*   osc2Enabled;
 
    juce::dsp::ProcessorChain<OscillatorProcessor<float>, OscillatorProcessor<float>,
                              juce::dsp::LadderFilter<float>, juce::dsp::Gain<float>> processorChain;

@@ -28,6 +28,9 @@ AudioPluginAudioProcessor::createParameterLayout()
     layout.add(std::make_unique<juce::AudioParameterChoice> (juce::ParameterID{"osc1Waveform", 1}, "Oscillator 1 Waveform", oscillatorWaveformChoices, 0));
     layout.add(std::make_unique<juce::AudioParameterChoice> (juce::ParameterID{"osc2Waveform", 1}, "Oscillator 2 Waveform", oscillatorWaveformChoices, 0));
 
+    layout.add(std::make_unique<juce::AudioParameterBool>  (juce::ParameterID{"osc1Enabled", 1}, "Oscillator 1 Enabled", true));
+    layout.add(std::make_unique<juce::AudioParameterBool>  (juce::ParameterID{"osc2Enabled", 1}, "Oscillator 2 Enabled", false));
+
 
     return layout;
 }
@@ -58,10 +61,6 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
     fxBypass1 = dynamic_cast<juce::AudioParameterBool*>(parameters.getParameter("fxBypass1"));
     fxBypass2 = dynamic_cast<juce::AudioParameterBool*>(parameters.getParameter("fxBypass2"));
     fxBypass3 = dynamic_cast<juce::AudioParameterBool*>(parameters.getParameter("fxBypass3"));
-
-    osc1Waveform = dynamic_cast<juce::AudioParameterChoice*>(parameters.getParameter("osc1Waveform"));
-    osc2Waveform = dynamic_cast<juce::AudioParameterChoice*>(parameters.getParameter("osc2Waveform"));
-     
 }
 
 AudioPluginAudioProcessor::~AudioPluginAudioProcessor()
@@ -181,7 +180,7 @@ void AudioPluginAudioProcessor::updateGraph(){
         {
             if (slot != nullptr)
             {
-                if (slot->getProcessor()->getName() == "Processor") 
+                if (slot->getProcessor()->getName() == "Oscillator") 
                     continue;
                 mainProcessor->removeNode (slot.get());
             }
@@ -271,14 +270,7 @@ void AudioPluginAudioProcessor::connectAudioNodes(){
         mainProcessor->addConnection ({ { audioInputNode->nodeID, channel },
             { audioOutputNode->nodeID, channel } });
     */
-    if(slot1Node == nullptr){
-        for (int channel = 0; channel < 2; ++channel)
-        {
-            mainProcessor->addConnection ({ { audioEngineNode->nodeID, channel },
-                                          { audioOutputNode->nodeID, channel   }});
-        }
-    }
-    else
+    if(slot1Node != nullptr)
     {
         for (int channel = 0; channel < 2; ++channel)
         {
@@ -286,11 +278,19 @@ void AudioPluginAudioProcessor::connectAudioNodes(){
                                           { slot1Node->nodeID, channel   }});
         }
     }
+    else
+    {
+        for (int channel = 0; channel < 2; ++channel)
+        {
+            mainProcessor->addConnection ({ { audioEngineNode->nodeID, channel },
+                                          { audioOutputNode->nodeID, channel   }});
+        }
+    }
 
 }
 
 void AudioPluginAudioProcessor::connectMidiNodes(){
-    // Connect MIDI input to the audio Engine node which contains the synth engine
+    // Connect MIDI input to the audio Engine node which contains the synth voice
     mainProcessor->addConnection ({ { midiInputNode->nodeID,
 juce::AudioProcessorGraph::midiChannelIndex },
     { audioEngineNode->nodeID, juce::AudioProcessorGraph::midiChannelIndex } });
@@ -310,7 +310,8 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
 
     auto phase_ = *phase ? -1.0f : 1.0f;
     previousGain = *gain * phase_;
-    audioEngine.prepare({ sampleRate, (juce::uint32) samplesPerBlock, 2 });
+
+    audioEngine.prepareToPlay( sampleRate, (juce::uint32) samplesPerBlock);
     midiMessageCollector.reset (sampleRate);
 
     mainProcessor->setPlayConfigDetails(getMainBusNumInputChannels(),
@@ -318,8 +319,8 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
                                         sampleRate,
                                         samplesPerBlock);
     mainProcessor->prepareToPlay(sampleRate, samplesPerBlock);
-    initialiseGraph();
 
+    initialiseGraph();
 }
 
 void AudioPluginAudioProcessor::releaseResources()

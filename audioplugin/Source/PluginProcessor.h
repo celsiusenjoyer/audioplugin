@@ -88,10 +88,6 @@ private:
     juce::AudioParameterBool* fxBypass2 = nullptr;
     juce::AudioParameterBool* fxBypass3 = nullptr;
     
-    // Oscillator Waveforms
-    juce::AudioParameterChoice* osc1Waveform = nullptr;
-    juce::AudioParameterChoice* osc2Waveform = nullptr;
-    
     Node::Ptr audioInputNode;
     Node::Ptr audioOutputNode;
     Node::Ptr midiInputNode;

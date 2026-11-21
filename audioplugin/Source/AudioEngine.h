@@ -9,10 +9,12 @@ class AudioEngine : public ProcessorBase,
 public:
 
     AudioEngine(juce::AudioProcessorValueTreeState&);
-    static constexpr int maxNumVoices = 16; 
-
+    static constexpr int maxNumVoices = 4; 
+    void prepareToPlay(double, int) override;
     void prepare (const juce::dsp::ProcessSpec&) noexcept;
     const juce::String getName() const override;
+    void processBlock(juce::AudioSampleBuffer&, juce::MidiBuffer&) override;
+    bool acceptsMidi() const override;
 private:
     void renderNextSubBlock(juce::AudioBuffer<float>&, int, int) override;
     

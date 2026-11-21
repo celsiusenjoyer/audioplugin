@@ -7,6 +7,9 @@ OscillatorProcessor<Type>::OscillatorProcessor()
 }
 
 template <typename Type>
+const juce::String OscillatorProcessor<Type>::getName() const { return "Oscillator"; }
+
+template <typename Type>
 void OscillatorProcessor<Type>::setWaveform(juce::AudioParameterChoice* waveform)
 {
     auto& osc = processorChain.template get<oscIndex>();
@@ -30,6 +33,14 @@ void OscillatorProcessor<Type>::setWaveform(juce::AudioParameterChoice* waveform
 }
 
 template <typename Type>
+void OscillatorProcessor<Type>::prepareToPlay(double sampleRate, int samplesPerBlock)
+{
+
+    juce::dsp::ProcessSpec spec { sampleRate, static_cast<juce::uint32> (samplesPerBlock), 2 };
+    prepare(spec);
+}
+
+template <typename Type>
 void OscillatorProcessor<Type>::prepare (const juce::dsp::ProcessSpec& spec)
 {
     processorChain.prepare (spec); 
@@ -47,6 +58,15 @@ void OscillatorProcessor<Type>::setLevel(Type newValue)
 {
     auto& gain = processorChain.template get<gainIndex>();
     gain.setGainLinear (newValue);
+}
+
+template <typename Type>
+void OscillatorProcessor<Type>::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiBuffer)
+{
+
+    juce::dsp::AudioBlock<float> block (buffer);
+    juce::dsp::ProcessContextReplacing<float> context (block);
+    process(context);
 }
 
 template <typename Type>

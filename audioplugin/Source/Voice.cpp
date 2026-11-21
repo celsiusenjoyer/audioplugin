@@ -6,9 +6,10 @@ Voice::Voice(juce::AudioProcessorValueTreeState& vts)
     auto& masterGain = processorChain.get<masterGainIndex>();
     masterGain.setGainLinear(valueTreeState.getRawParameterValue("gain")->load());
     
+    osc1Enabled = dynamic_cast<juce::AudioParameterBool*>(valueTreeState.getParameter("osc1Enabled"));
+    osc2Enabled = dynamic_cast<juce::AudioParameterBool*>(valueTreeState.getParameter("osc2Enabled"));
     osc1Waveform = dynamic_cast<juce::AudioParameterChoice*>(valueTreeState.getParameter("osc1Waveform"));
     osc2Waveform = dynamic_cast<juce::AudioParameterChoice*>(valueTreeState.getParameter("osc2Waveform"));
-
 
     processorChain.get<osc1Index>().setWaveform(osc1Waveform);
     processorChain.get<osc2Index>().setWaveform(osc2Waveform);
@@ -34,18 +35,47 @@ void Voice::noteStarted()
     auto velocity = getCurrentlyPlayingNote().noteOnVelocity.asUnsignedFloat();
     auto freqHz = (float) getCurrentlyPlayingNote().getFrequencyInHertz();
 
-    processorChain.get<osc1Index>().setFrequency (freqHz, true);
-    processorChain.get<osc1Index>().setLevel (velocity);
+    if(osc1Enabled->get() == true){
+        processorChain.get<osc1Index>().setFrequency(freqHz, true);
+        processorChain.get<osc1Index>().setLevel (velocity);
+    }
+    else
+    {
+        processorChain.get<osc1Index>().setFrequency(0.0, true);
+        processorChain.get<osc1Index>().setLevel (velocity);
+    }
 
-    processorChain.get<osc2Index>().setFrequency (freqHz * 1.01f, true);
-    processorChain.get<osc2Index>().setLevel(velocity);
+    if(osc2Enabled->get() == true){
+        processorChain.get<osc2Index>().setFrequency(freqHz * 1.01f, true);
+        processorChain.get<osc2Index>().setLevel(velocity);
+    }
+    else
+    {
+        processorChain.get<osc2Index>().setFrequency(0.0, true);
+        processorChain.get<osc2Index>().setLevel (velocity);
+    }
 }
 
 void Voice::notePitchbendChanged()
 {
     auto freqHz = (float) getCurrentlyPlayingNote().getFrequencyInHertz();
-    processorChain.get<osc1Index>().setFrequency(freqHz, false);
-    processorChain.get<osc2Index>().setFrequency(freqHz * 1.01f, false);
+
+
+    if(osc1Enabled->get() == true){
+        processorChain.get<osc1Index>().setFrequency(freqHz, false);
+    }
+    else
+    {
+        processorChain.get<osc1Index>().setFrequency(0.0, false);
+    }
+
+    if(osc2Enabled->get() == true){
+        processorChain.get<osc2Index>().setFrequency(freqHz * 1.01f, false);
+    }
+    else
+    {
+        processorChain.get<osc2Index>().setFrequency(0.0, false);
+    }
 }
 
 void Voice::noteStopped(bool)
@@ -59,28 +89,11 @@ void Voice::noteKeyStateChanged() {}
 
 void Voice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples)
 {
-    auto output = tempBlock.getSubBlock (0, (size_t) numSamples);
-    output.clear();
+    auto block = tempBlock.getSubBlock (0, (size_t) numSamples);
+    block.clear();
     
-    for (size_t pos = 0; pos < (size_t) numSamples;)
-    {
-        auto max = juce::jmin((size_t) numSamples - pos, lfoUpdateCounter);
-        auto block = output.getSubBlock (pos, max);
-
-        juce::dsp::ProcessContextReplacing<float> context (block);
-        processorChain.process (context);
-
-        pos += max;
-        lfoUpdateCounter -= max;
-
-        if(lfoUpdateCounter == 0)
-        {
-            lfoUpdateCounter = lfoUpdateRate;
-            auto lfoOut = lfo.processSample (0.0f);
-            auto curoffFreqHz = juce::jmap (lfoOut, -1.0f, 1.0f, 100.0f, 2000.0f);
-            processorChain.get<filterIndex>().setCutoffFrequencyHz (curoffFreqHz);
-        }
-    }
+    juce::dsp::ProcessContextReplacing<float> context (block);
+    processorChain.process(context);
 
     juce::dsp::AudioBlock<float> (outputBuffer)
         .getSubBlock ((size_t) startSample, (size_t) numSamples)
