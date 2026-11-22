@@ -6,9 +6,6 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     : AudioProcessorEditor (&p), audioProcessor (p), valueTreeState(vts)
 {
 
-    //invertButton.setButtonText("Invert Phase");
-    //addAndMakeVisible(invertButton);
-
     // Gain
     gainLabel.setText("Noise level in dB", juce::dontSendNotification);
 
@@ -27,7 +24,44 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
 
     addAndMakeVisible(muteInputButton);
 
-    // Combo box
+    // Osc waveform ComboBox
+    osc1WaveformLabel.setText("Waveform", juce::dontSendNotification);
+    osc2WaveformLabel.setText("Waveform", juce::dontSendNotification);
+    
+    addAndMakeVisible(osc1WaveformLabel);
+    addAndMakeVisible(osc2WaveformLabel);
+    
+    osc1WaveformCB.addItemList(waveformChoices, 1);
+    osc2WaveformCB.addItemList(waveformChoices, 1);
+
+    osc1WaveformCBAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>
+        (vts, "osc1Waveform", osc1WaveformCB);
+    osc2WaveformCBAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>
+        (vts, "osc2Waveform", osc2WaveformCB);
+
+    addAndMakeVisible(osc1WaveformCB);
+    addAndMakeVisible(osc2WaveformCB);
+
+    osc1WaveformLabel.attachToComponent(&osc1WaveformCB, true);
+    osc2WaveformLabel.attachToComponent(&osc2WaveformCB, true);
+
+    // Osc enable 
+    osc1Enabled.setButtonText("Enable");
+    osc1Enabled.setToggleState("true", juce::dontSendNotification);
+    
+    osc1EnabledAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>
+        (vts, "osc1Enabled", osc1Enabled);
+
+    osc2Enabled.setButtonText("Enable");
+    osc2Enabled.setToggleState("false", juce::dontSendNotification);
+
+    osc2EnabledAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>
+        (vts, "osc2Enabled", osc2Enabled);
+    
+    addAndMakeVisible(osc1Enabled);
+    addAndMakeVisible(osc2Enabled);
+
+    // FX Slot Combo box
     fxSlot1Label.setText("FX Slot 1", juce::dontSendNotification);
     fxSlot2Label.setText("FX Slot 2", juce::dontSendNotification);
     fxSlot3Label.setText("FX Slot 3", juce::dontSendNotification);
@@ -78,7 +112,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     midiKeyboardState.addListener(&audioProcessor.getMidiMessageCollector());
 
     p.initialiseGraph();
-    setSize(600, 400);
+    setSize(900, 600);
 }
 
 AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
@@ -110,6 +144,12 @@ void AudioPluginAudioProcessorEditor::resized()
     
     juce::FlexItem FIMuteInput (fbWidth, fbHeight, muteInputButton);
 
+    juce::FlexItem FIOsc1Enabled (fbWidth, fbHeight, osc1Enabled);
+    juce::FlexItem FIOsc2Enabled (fbWidth, fbHeight, osc2Enabled);
+
+    juce::FlexItem FIOsc1Waveform (fbWidth, fbHeight, osc1WaveformCB);
+    juce::FlexItem FIOsc2Waveform (fbWidth, fbHeight, osc2WaveformCB);
+
     juce::FlexItem FIFxSlot1 (fbWidth, fbHeight, fxSlot1CB);
     juce::FlexItem FIFxSlot2 (fbWidth, fbHeight, fxSlot2CB);
     juce::FlexItem FIFxSlot3 (fbWidth, fbHeight, fxSlot3CB);
@@ -119,6 +159,10 @@ void AudioPluginAudioProcessorEditor::resized()
     juce::FlexItem FIFxBypassSlot3 (fbWidth, fbHeight, fxBypassSlot3);
     
     fb.items.addArray ({ FIMuteInput,
+                         FIOsc1Enabled,
+                         FIOsc2Enabled,
+                         FIOsc1Waveform,
+                         FIOsc2Waveform,
                          FIFxSlot1,
                          FIFxSlot2,
                          FIFxSlot3,

@@ -11,8 +11,6 @@ Voice::Voice(juce::AudioProcessorValueTreeState& vts)
     osc1Waveform = dynamic_cast<juce::AudioParameterChoice*>(valueTreeState.getParameter("osc1Waveform"));
     osc2Waveform = dynamic_cast<juce::AudioParameterChoice*>(valueTreeState.getParameter("osc2Waveform"));
 
-    processorChain.get<osc1Index>().setWaveform(osc1Waveform);
-    processorChain.get<osc2Index>().setWaveform(osc2Waveform);
 
     auto& filter = processorChain.get<filterIndex>();
     filter.setCutoffFrequencyHz (100.0f);
@@ -34,6 +32,9 @@ void Voice::noteStarted()
 {
     auto velocity = getCurrentlyPlayingNote().noteOnVelocity.asUnsignedFloat();
     auto freqHz = (float) getCurrentlyPlayingNote().getFrequencyInHertz();
+
+    processorChain.get<osc1Index>().setWaveform(osc1Waveform);
+    processorChain.get<osc2Index>().setWaveform(osc2Waveform);
 
     if(osc1Enabled->get() == true){
         processorChain.get<osc1Index>().setFrequency(freqHz, true);
@@ -60,6 +61,8 @@ void Voice::notePitchbendChanged()
 {
     auto freqHz = (float) getCurrentlyPlayingNote().getFrequencyInHertz();
 
+    processorChain.get<osc1Index>().setWaveform(osc1Waveform);
+    processorChain.get<osc2Index>().setWaveform(osc2Waveform);
 
     if(osc1Enabled->get() == true){
         processorChain.get<osc1Index>().setFrequency(freqHz, false);

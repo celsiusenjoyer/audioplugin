@@ -25,6 +25,7 @@ private:
     juce::AudioProcessorValueTreeState& valueTreeState;
 
     const juce::StringArray processorChoices { "Empty", "Oscillator", "Gain", "Filter" };
+    const juce::StringArray waveformChoices { "sinewave", "sawtooth" };
     
     // Invert Phase
     juce::ToggleButton invertButton;
@@ -39,7 +40,21 @@ private:
     juce::ToggleButton muteInputButton;
     std::unique_ptr<ButtonAttachment> muteInputAttachment;
     
-    // Combo box
+    // Osc Waveform 
+    juce::Label osc1WaveformLabel;
+    juce::Label osc2WaveformLabel;
+    juce::ComboBox osc1WaveformCB;
+    juce::ComboBox osc2WaveformCB;
+    std::unique_ptr<ComboBoxAttachment> osc1WaveformCBAttachment;
+    std::unique_ptr<ComboBoxAttachment> osc2WaveformCBAttachment;
+
+    // Oscillators enabled
+    juce::ToggleButton osc1Enabled;
+    juce::ToggleButton osc2Enabled;
+    std::unique_ptr<ButtonAttachment> osc1EnabledAttachment;
+    std::unique_ptr<ButtonAttachment> osc2EnabledAttachment;
+
+    // FX Slot Combo box
     juce::Label fxSlot1Label; 
     juce::Label fxSlot2Label;
     juce::Label fxSlot3Label; 

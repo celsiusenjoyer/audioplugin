@@ -25,7 +25,7 @@ private:
         reverbIndex
     };
 
-    juce::dsp::ProcessorChain<juce::dsp::Reverb> fxChain;
+    juce::dsp::ProcessorChain<juce::dsp::Gain> fxChain;
 };
 
 
