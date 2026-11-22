@@ -41,6 +41,8 @@ set(SourceFiles
         Source/GainProcessor.h
         Source/FilterProcessor.cpp
         Source/FilterProcessor.h
+        Source/ReverbProcessor.cpp
+        Source/ReverbProcessor.h
         Source/Voice.cpp
         Source/Voice.h
         Source/AudioEngine.cpp

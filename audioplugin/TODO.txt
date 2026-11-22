@@ -1,8 +1,0 @@
-Voice needs to always be on so set up the Voice as a node(maybe ??) and connect once and never touch again
-
-// Always-on: connect once, never touch again
-for (int ch = 0; ch < 2; ++ch)
-    graph.addConnection ({ { oscNode->nodeID,   ch },
-                           { stripNode->nodeID, ch } });
-
-Set up reverb processor as a node (mostly done)
